@@ -119,10 +119,32 @@
             }
           };
 
-          const analyzeData = (playersData, teamsMap, fixturesData, currentGW) => {
+                      const analyzeData = (playersData, teamsMap, fixturesData, currentGW) => {
             const nextGW = currentGW ? currentGW + 1 : null;
             
             const upcomingFixtures = fixturesData.filter(f => f.event === nextGW);
+            
+            // Create a map of team fixtures for easy lookup
+            const teamFixturesMap = {};
+            upcomingFixtures.forEach(fixture => {
+              const homeTeam = fixture.team_h;
+              const awayTeam = fixture.team_a;
+              
+              if (!teamFixturesMap[homeTeam]) teamFixturesMap[homeTeam] = [];
+              if (!teamFixturesMap[awayTeam]) teamFixturesMap[awayTeam] = [];
+              
+              teamFixturesMap[homeTeam].push({
+                opponent: teamsMap[awayTeam]?.short_name || 'Unknown',
+                isHome: true,
+                difficulty: fixture.team_h_difficulty
+              });
+              
+              teamFixturesMap[awayTeam].push({
+                opponent: teamsMap[homeTeam]?.short_name || 'Unknown',
+                isHome: false,
+                difficulty: fixture.team_a_difficulty
+              });
+            });
             
             const calculateFixtureDifficulty = (teamId) => {
               const teamFixtures = upcomingFixtures.filter(
@@ -146,6 +168,12 @@
               const valueScore = player.now_cost > 0 ? (player.total_points / player.now_cost) * 10 : 0;
               const fixtureDifficulty = calculateFixtureDifficulty(player.team);
               const fixtureScore = (5 - fixtureDifficulty) * 2;
+              
+              // Get fixture info for this player's team
+              const fixtures = teamFixturesMap[player.team] || [];
+              const fixtureString = fixtures.length > 0 
+                ? fixtures.map(f => `${f.isHome ? 'vs' : '@'} ${f.opponent}`).join(', ')
+                : 'No fixture';
               
               // Calculate average points per game (more reliable than PPG from minutes)
               const gamesPlayed = player.starts || 1;
@@ -179,7 +207,8 @@
                 avgPointsPerGame,
                 form,
                 fixtureDifficulty,
-                valueScore
+                valueScore,
+                fixtureString
               };
             });
             
@@ -317,6 +346,9 @@
                             <div className="font-bold text-gray-900">{player.web_name}</div>
                             <div className="text-sm text-gray-600">{teams[player.team]?.short_name}</div>
                             <div className="text-sm text-gray-600">{getPositionName(player.element_type)}</div>
+                            <div className="text-xs font-semibold text-purple-600 mt-1 mb-2">
+                              {player.fixtureString}
+                            </div>
                             <div className="mt-2 space-y-1 text-xs">
                               <div className="flex justify-between">
                                 <span className="text-gray-600">Form:</span>
@@ -356,11 +388,12 @@
                                 <tr>
                                   <th className="px-4 py-2 text-left text-sm font-semibold text-purple-900">Player</th>
                                   <th className="px-4 py-2 text-left text-sm font-semibold text-purple-900">Team</th>
+                                  <th className="px-4 py-2 text-left text-sm font-semibold text-purple-900">Fixture</th>
                                   <th className="px-4 py-2 text-center text-sm font-semibold text-purple-900">Price</th>
                                   <th className="px-4 py-2 text-center text-sm font-semibold text-purple-900">Form</th>
                                   <th className="px-4 py-2 text-center text-sm font-semibold text-purple-900">Points</th>
                                   <th className="px-4 py-2 text-center text-sm font-semibold text-purple-900">Selected %</th>
-                                  <th className="px-4 py-2 text-center text-sm font-semibold text-purple-900">Fixture</th>
+                                  <th className="px-4 py-2 text-center text-sm font-semibold text-purple-900">Difficulty</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -368,6 +401,7 @@
                                   <tr key={player.id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                                     <td className="px-4 py-3 font-medium text-gray-900">{player.web_name}</td>
                                     <td className="px-4 py-3 text-gray-700">{teams[player.team]?.short_name}</td>
+                                    <td className="px-4 py-3 text-sm text-purple-600 font-medium">{player.fixtureString}</td>
                                     <td className="px-4 py-3 text-center">{formatPrice(player.now_cost)}</td>
                                     <td className="px-4 py-3 text-center font-semibold text-green-600">{player.form}</td>
                                     <td className="px-4 py-3 text-center">{player.total_points}</td>
@@ -401,6 +435,9 @@
                             <div className="font-bold text-gray-900">{player.web_name}</div>
                             <div className="text-sm text-gray-600">{teams[player.team]?.short_name}</div>
                             <div className="text-sm text-gray-600">{getPositionName(player.element_type)}</div>
+                            <div className="text-xs font-semibold text-purple-600 mt-1 mb-2">
+                              {player.fixtureString}
+                            </div>
                             <div className="mt-2 space-y-1 text-xs">
                               <div className="flex justify-between">
                                 <span className="text-gray-600">Price:</span>
