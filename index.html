@@ -13,7 +13,6 @@
     <div id="root"></div>
     <script type="text/babel">
         const { useState } = React;
-        const { TrendingUp, RefreshCw, Users, Target, DollarSign, AlertCircle, Upload, Code } = lucide;
 
         const FPLAnalyzer = () => {
           const [loading, setLoading] = useState(false);
@@ -207,11 +206,10 @@
             <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-4">
               <div className="max-w-7xl mx-auto">
                 <div className="bg-white rounded-lg shadow-2xl p-6 mb-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
                     <div>
                       <h1 className="text-3xl font-bold text-purple-900 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                        FPL Gameweek Recommendations
+                        📊 FPL Gameweek Recommendations
                       </h1>
                       <p className="text-gray-600 mt-1">Data-driven insights for your Fantasy Premier League team</p>
                     </div>
@@ -221,15 +219,13 @@
                         disabled={loading}
                         className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={loading ? 'animate-spin' : ''}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                        {loading ? 'Loading...' : 'Auto Fetch'}
+                        {loading ? '⏳' : '🔄'} {loading ? 'Loading...' : 'Auto Fetch'}
                       </button>
                       <button
                         onClick={() => setShowManualInput(!showManualInput)}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Manual Input
+                        📤 Manual Input
                       </button>
                     </div>
                   </div>
@@ -237,13 +233,12 @@
                   {showManualInput && (
                     <div className="bg-indigo-50 rounded-lg p-4 mb-4">
                       <h3 className="font-semibold text-indigo-900 mb-2 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                        Manual Data Input
+                        📝 Manual Data Input
                       </h3>
                       <p className="text-sm text-gray-700 mb-3">
                         1. Visit: <a href="https://fantasy.premierleague.com/api/bootstrap-static/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">https://fantasy.premierleague.com/api/bootstrap-static/</a>
                         <br />
-                        2. Copy all the JSON data from that page
+                        2. Copy all the JSON data from that page (Ctrl+A, Ctrl+C)
                         <br />
                         3. Paste it in the box below and click "Analyze Data"
                       </p>
@@ -258,7 +253,7 @@
                         disabled={!manualData.trim() || loading}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Analyze Data
+                        ✅ Analyze Data
                       </button>
                     </div>
                   )}
@@ -266,14 +261,14 @@
                   {currentGameweek && (
                     <div className="bg-purple-50 rounded-lg p-4 mb-4">
                       <p className="text-purple-900 font-semibold">
-                        Current Gameweek: {currentGameweek} | Next Gameweek: {currentGameweek + 1}
+                        📅 Current Gameweek: {currentGameweek} | Next Gameweek: {currentGameweek + 1}
                       </p>
                     </div>
                   )}
                   
                   {error && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2 text-red-800">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <span className="text-xl">⚠️</span>
                       <div>
                         <p className="font-semibold">Error</p>
                         <p className="text-sm">{error}</p>
@@ -286,8 +281,7 @@
                   <>
                     <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
                       <h2 className="text-2xl font-bold text-purple-900 mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                        Top Captain Picks (GW {recommendations.nextGameweek})
+                        🎯 Top Captain Picks (GW {recommendations.nextGameweek})
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         {recommendations.captainPicks.map((player, idx) => (
@@ -317,8 +311,7 @@
 
                     <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
                       <h2 className="text-2xl font-bold text-purple-900 mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        Top Picks by Position
+                        👥 Top Picks by Position
                       </h2>
                       
                       {[1, 2, 3, 4].map(position => (
@@ -368,8 +361,7 @@
 
                     <div className="bg-white rounded-lg shadow-xl p-6">
                       <h2 className="text-2xl font-bold text-purple-900 mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        Differential Picks (Low Ownership)
+                        💎 Differential Picks (Low Ownership)
                       </h2>
                       <p className="text-gray-600 mb-4">Players owned by less than 5% who could be great differentials</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -401,7 +393,7 @@
 
                 {!recommendations && !loading && (
                   <div className="bg-white rounded-lg shadow-xl p-12 text-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-300 mx-auto mb-4"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                    <div className="text-6xl mb-4">⚽</div>
                     <h3 className="text-xl font-semibold text-gray-700 mb-2">Ready to analyze FPL data</h3>
                     <p className="text-gray-600 mb-4">Click "Auto Fetch" to try automatic data retrieval, or use "Manual Input" if that doesn't work</p>
                     <div className="bg-gray-50 rounded-lg p-4 text-sm text-left max-w-2xl mx-auto">
