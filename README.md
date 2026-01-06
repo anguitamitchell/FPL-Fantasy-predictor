@@ -4,7 +4,6 @@
 
 A data-driven Fantasy Premier League analysis tool that provides weekly recommendations for captain picks, transfers, and differential players based on official FPL API data.
 
-![FPL Tool Screenshot](https://via.placeholder.com/800x400?text=FPL+Recommendations+Tool)
 
 ## Features
 
