@@ -15,9 +15,8 @@ A data-driven Fantasy Premier League analysis tool that provides weekly recommen
 
 ## Live Demo
 
-🔗 [View Live Demo](https://yourusername.github.io/fpl-recommendations-tool/)
+🔗 [View Live Demo](https://anguitamitchell.github.io/FPL-Fantasy-predictor/)
 
-*(Replace with your actual GitHub Pages URL after deployment)*
 
 ## How It Works
 
