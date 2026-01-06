@@ -22,12 +22,12 @@ A data-driven Fantasy Premier League analysis tool that provides weekly recommen
 ## How It Works
 
 The tool analyzes player data using a scoring algorithm that weighs:
-- Recent form (3x weight)
-- Points per 90 minutes (2x weight)
-- Value for money (2x weight)
-- Upcoming fixture difficulty (1.5x weight)
-- Playing time reliability (bonus for 500+ minutes)
-- ICT Index (Influence, Creativity, Threat)
+Average Points Per Game: 5x weight (most important!)
+Total Season Points: 0.5x weight (rewards consistency)
+Recent Form: 4x weight (hot players)
+Good Fixtures: 2x weight
+Bonus Point Magnets: 2x weight per bonus
+Template players (>20% owned): Bonus points
 
 ## Usage
 
