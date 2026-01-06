@@ -147,6 +147,10 @@
               const fixtureDifficulty = calculateFixtureDifficulty(player.team);
               const fixtureScore = (5 - fixtureDifficulty) * 2;
               
+              // Calculate average points per game (more reliable than PPG from minutes)
+              const gamesPlayed = player.starts || 1;
+              const avgPointsPerGame = player.total_points / gamesPlayed;
+              
               const score = (
                 form * 3 +
                 pointsPerGame * 2 +
@@ -156,9 +160,23 @@
                 (player.ict_index ? parseFloat(player.ict_index) / 20 : 0)
               );
               
+              // Special captain score that heavily weights consistency and total points
+              const captainScore = (
+                avgPointsPerGame * 5 +                           // High weight on average points
+                player.total_points * 0.5 +                      // Reward total season points
+                form * 4 +                                       // Recent form is crucial
+                fixtureScore * 2 +                               // Good fixtures matter
+                (player.minutes > 1000 ? 15 : 0) +               // Must be a regular starter
+                (player.ict_index ? parseFloat(player.ict_index) / 15 : 0) +
+                (player.bonus ? player.bonus * 2 : 0) +          // Bonus point magnets
+                (selectedBy > 20 ? 5 : 0)                        // Template players get bonus
+              );
+              
               return {
                 ...player,
                 score,
+                captainScore,
+                avgPointsPerGame,
                 form,
                 fixtureDifficulty,
                 valueScore
@@ -166,7 +184,9 @@
             });
             
             const availablePlayers = scoredPlayers.filter(p => 
-              p.status === 'a' && (p.chance_of_playing_next_round === null || p.chance_of_playing_next_round >= 75)
+              p.status === 'a' && 
+              (p.chance_of_playing_next_round === null || p.chance_of_playing_next_round >= 75) &&
+              p.minutes > 500  // Must have played at least 500 minutes this season
             );
             
             const byPosition = {
@@ -176,8 +196,15 @@
               4: availablePlayers.filter(p => p.element_type === 4).sort((a, b) => b.score - a.score).slice(0, 15)
             };
             
-            const captainPicks = availablePlayers
-              .sort((a, b) => b.score - a.score)
+            // Captain picks: use special captain score and filter for premium, reliable players
+            const captainCandidates = availablePlayers.filter(p => 
+              p.minutes > 1000 &&                                    // Regular starters only
+              p.total_points > 50 &&                                 // Must have decent season total
+              (p.element_type === 3 || p.element_type === 4)        // Midfielders and forwards only
+            );
+            
+            const captainPicks = captainCandidates
+              .sort((a, b) => b.captainScore - a.captainScore)
               .slice(0, 5);
             
             const differentials = availablePlayers
@@ -296,12 +323,16 @@
                                 <span className="font-semibold">{player.form}</span>
                               </div>
                               <div className="flex justify-between">
+                                <span className="text-gray-600">Avg PPG:</span>
+                                <span className="font-semibold text-green-600">{player.avgPointsPerGame.toFixed(1)}</span>
+                              </div>
+                              <div className="flex justify-between">
                                 <span className="text-gray-600">Price:</span>
                                 <span className="font-semibold">{formatPrice(player.now_cost)}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-gray-600">Points:</span>
-                                <span className="font-semibold">{player.total_points}</span>
+                                <span className="text-gray-600">Total:</span>
+                                <span className="font-semibold">{player.total_points} pts</span>
                               </div>
                             </div>
                           </div>
