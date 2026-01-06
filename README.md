@@ -1,5 +1,3 @@
-# FPL-Fantasy-predictor
-
 # FPL Gameweek Recommendations Tool
 
 A data-driven Fantasy Premier League analysis tool that provides weekly recommendations for captain picks, transfers, and differential players based on official FPL API data.
@@ -96,7 +94,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License - feel free to use this tool for personal or commercial purposes.
+GNU GENERAL PUBLIC LICENSE
 
 ## Disclaimer
 
