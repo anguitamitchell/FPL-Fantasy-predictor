@@ -119,7 +119,7 @@
             }
           };
 
-          const analyzeData = (playersData, teamsMap, fixturesData, currentGW) => {
+                      const analyzeData = (playersData, teamsMap, fixturesData, currentGW) => {
             const nextGW = currentGW ? currentGW + 1 : null;
             
             const upcomingFixtures = fixturesData.filter(f => f.event === nextGW);
@@ -175,7 +175,7 @@
                 ? fixtures.map(f => `${f.isHome ? 'vs' : '@'} ${f.opponent}`).join(', ')
                 : 'No fixture';
               
-              // Calculate average points per game
+              // Calculate average points per game (more reliable than PPG from minutes)
               const gamesPlayed = player.starts || 1;
               const avgPointsPerGame = player.total_points / gamesPlayed;
               
@@ -188,16 +188,16 @@
                 (player.ict_index ? parseFloat(player.ict_index) / 20 : 0)
               );
               
-              // Special captain score
+              // Special captain score that heavily weights consistency and total points
               const captainScore = (
-                avgPointsPerGame * 5 +
-                player.total_points * 0.5 +
-                form * 4 +
-                fixtureScore * 2 +
-                (player.minutes > 1000 ? 15 : 0) +
+                avgPointsPerGame * 5 +                           // High weight on average points
+                player.total_points * 0.5 +                      // Reward total season points
+                form * 4 +                                       // Recent form is crucial
+                fixtureScore * 2 +                               // Good fixtures matter
+                (player.minutes > 1000 ? 15 : 0) +               // Must be a regular starter
                 (player.ict_index ? parseFloat(player.ict_index) / 15 : 0) +
-                (player.bonus ? player.bonus * 2 : 0) +
-                (selectedBy > 20 ? 5 : 0)
+                (player.bonus ? player.bonus * 2 : 0) +          // Bonus point magnets
+                (selectedBy > 20 ? 5 : 0)                        // Template players get bonus
               );
               
               return {
@@ -215,7 +215,7 @@
             const availablePlayers = scoredPlayers.filter(p => 
               p.status === 'a' && 
               (p.chance_of_playing_next_round === null || p.chance_of_playing_next_round >= 75) &&
-              p.minutes > 500
+              p.minutes > 500  // Must have played at least 500 minutes this season
             );
             
             const byPosition = {
@@ -225,84 +225,16 @@
               4: availablePlayers.filter(p => p.element_type === 4).sort((a, b) => b.score - a.score).slice(0, 15)
             };
             
+            // Captain picks: use special captain score and filter for premium, reliable players
             const captainCandidates = availablePlayers.filter(p => 
-              p.minutes > 1000 &&
-              p.total_points > 50 &&
-              (p.element_type === 3 || p.element_type === 4)
+              p.minutes > 1000 &&                                    // Regular starters only
+              p.total_points > 50 &&                                 // Must have decent season total
+              (p.element_type === 3 || p.element_type === 4)        // Midfielders and forwards only
             );
             
             const captainPicks = captainCandidates
               .sort((a, b) => b.captainScore - a.captainScore)
               .slice(0, 5);
-            
-            // Build optimal squad
-            const buildOptimalSquad = () => {
-              const budget = 1000;
-              const squad = {
-                goalkeepers: [],
-                defenders: [],
-                midfielders: [],
-                forwards: []
-              };
-              
-              const gkCandidates = availablePlayers.filter(p => p.element_type === 1).sort((a, b) => b.score - a.score);
-              const defCandidates = availablePlayers.filter(p => p.element_type === 2).sort((a, b) => b.score - a.score);
-              const midCandidates = availablePlayers.filter(p => p.element_type === 3).sort((a, b) => b.score - a.score);
-              const fwdCandidates = availablePlayers.filter(p => p.element_type === 4).sort((a, b) => b.score - a.score);
-              
-              let remainingBudget = budget;
-              
-              // Select 2 goalkeepers
-              if (gkCandidates.length >= 2) {
-                squad.goalkeepers.push(gkCandidates[0]);
-                remainingBudget -= gkCandidates[0].now_cost;
-                
-                const budgetGk = gkCandidates.filter(p => p.now_cost <= 45 && p.id !== squad.goalkeepers[0].id).sort((a, b) => b.score - a.score)[0];
-                if (budgetGk) {
-                  squad.goalkeepers.push(budgetGk);
-                  remainingBudget -= budgetGk.now_cost;
-                }
-              }
-              
-              // Select 5 defenders
-              for (let i = 0; i < defCandidates.length && squad.defenders.length < 5; i++) {
-                const player = defCandidates[i];
-                if (player.now_cost <= remainingBudget) {
-                  squad.defenders.push(player);
-                  remainingBudget -= player.now_cost;
-                }
-              }
-              
-              // Select 5 midfielders
-              for (let i = 0; i < midCandidates.length && squad.midfielders.length < 5; i++) {
-                const player = midCandidates[i];
-                if (player.now_cost <= remainingBudget) {
-                  squad.midfielders.push(player);
-                  remainingBudget -= player.now_cost;
-                }
-              }
-              
-              // Select 3 forwards
-              for (let i = 0; i < fwdCandidates.length && squad.forwards.length < 3; i++) {
-                const player = fwdCandidates[i];
-                if (player.now_cost <= remainingBudget) {
-                  squad.forwards.push(player);
-                  remainingBudget -= player.now_cost;
-                }
-              }
-              
-              const totalCost = budget - remainingBudget;
-              const allPlayers = [...squad.goalkeepers, ...squad.defenders, ...squad.midfielders, ...squad.forwards];
-              
-              return {
-                squad,
-                totalCost,
-                remainingBudget,
-                playerCount: allPlayers.length
-              };
-            };
-            
-            const optimalSquad = buildOptimalSquad();
             
             const differentials = availablePlayers
               .filter(p => parseFloat(p.selected_by_percent) < 5 && p.score > 10)
@@ -313,8 +245,7 @@
               byPosition,
               captainPicks,
               differentials,
-              nextGameweek: nextGW,
-              optimalSquad
+              nextGameweek: nextGW
             });
           };
 
@@ -406,114 +337,6 @@
                   <>
                     <div className="bg-purple-900 rounded-lg shadow-xl p-6 mb-6 border border-purple-700">
                       <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                        🏆 Optimal 15-Man Squad (£100m Budget)
-                      </h2>
-                      <div className="bg-purple-800 rounded-lg p-4 mb-4 border border-purple-600">
-                        <div className="flex justify-between items-center text-white flex-wrap gap-4">
-                          <div>
-                            <span className="text-purple-300">Total Cost:</span>
-                            <span className="font-bold text-xl ml-2">{formatPrice(recommendations.optimalSquad.totalCost)}</span>
-                          </div>
-                          <div>
-                            <span className="text-purple-300">Remaining:</span>
-                            <span className="font-bold text-xl ml-2 text-green-400">{formatPrice(recommendations.optimalSquad.remainingBudget)}</span>
-                          </div>
-                          <div>
-                            <span className="text-purple-300">Players:</span>
-                            <span className="font-bold text-xl ml-2">{recommendations.optimalSquad.playerCount}/15</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="text-lg font-semibold text-purple-300 mb-3">Goalkeepers (2)</h3>
-                          <div className="space-y-2">
-                            {recommendations.optimalSquad.squad.goalkeepers.map((player) => (
-                              <div key={player.id} className="bg-purple-800 rounded-lg p-3 border border-purple-600">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <div className="font-bold text-white">{player.web_name}</div>
-                                    <div className="text-sm text-purple-200">{teams[player.team]?.short_name}</div>
-                                    <div className="text-xs text-purple-400 mt-1">{player.fixtureString}</div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-white">{formatPrice(player.now_cost)}</div>
-                                    <div className="text-sm text-green-400">{player.total_points} pts</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-lg font-semibold text-purple-300 mb-3">Defenders (5)</h3>
-                          <div className="space-y-2">
-                            {recommendations.optimalSquad.squad.defenders.map((player) => (
-                              <div key={player.id} className="bg-purple-800 rounded-lg p-3 border border-purple-600">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <div className="font-bold text-white">{player.web_name}</div>
-                                    <div className="text-sm text-purple-200">{teams[player.team]?.short_name}</div>
-                                    <div className="text-xs text-purple-400 mt-1">{player.fixtureString}</div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-white">{formatPrice(player.now_cost)}</div>
-                                    <div className="text-sm text-green-400">{player.total_points} pts</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-lg font-semibold text-purple-300 mb-3">Midfielders (5)</h3>
-                          <div className="space-y-2">
-                            {recommendations.optimalSquad.squad.midfielders.map((player) => (
-                              <div key={player.id} className="bg-purple-800 rounded-lg p-3 border border-purple-600">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <div className="font-bold text-white">{player.web_name}</div>
-                                    <div className="text-sm text-purple-200">{teams[player.team]?.short_name}</div>
-                                    <div className="text-xs text-purple-400 mt-1">{player.fixtureString}</div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-white">{formatPrice(player.now_cost)}</div>
-                                    <div className="text-sm text-green-400">{player.total_points} pts</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-lg font-semibold text-purple-300 mb-3">Forwards (3)</h3>
-                          <div className="space-y-2">
-                            {recommendations.optimalSquad.squad.forwards.map((player) => (
-                              <div key={player.id} className="bg-purple-800 rounded-lg p-3 border border-purple-600">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <div className="font-bold text-white">{player.web_name}</div>
-                                    <div className="text-sm text-purple-200">{teams[player.team]?.short_name}</div>
-                                    <div className="text-xs text-purple-400 mt-1">{player.fixtureString}</div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-white">{formatPrice(player.now_cost)}</div>
-                                    <div className="text-sm text-green-400">{player.total_points} pts</div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-purple-900 rounded-lg shadow-xl p-6 mb-6 border border-purple-700">
-                      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
                         🎯 Top Captain Picks (GW {recommendations.nextGameweek})
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -579,4 +402,85 @@
                                     <td className="px-4 py-3 font-medium text-white">{player.web_name}</td>
                                     <td className="px-4 py-3 text-purple-200">{teams[player.team]?.short_name}</td>
                                     <td className="px-4 py-3 text-sm text-purple-400 font-medium">{player.fixtureString}</td>
-                                    <td className="px-4 py-3 text
+                                    <td className="px-4 py-3 text-center text-white">{formatPrice(player.now_cost)}</td>
+                                    <td className="px-4 py-3 text-center font-semibold text-green-400">{player.form}</td>
+                                    <td className="px-4 py-3 text-center text-white">{player.total_points}</td>
+                                    <td className="px-4 py-3 text-center text-purple-200">{player.selected_by_percent}%</td>
+                                    <td className="px-4 py-3 text-center">
+                                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                        player.fixtureDifficulty <= 2 ? 'bg-green-600 text-white' :
+                                        player.fixtureDifficulty <= 3 ? 'bg-yellow-600 text-white' :
+                                        'bg-red-600 text-white'
+                                      }`}>
+                                        {player.fixtureDifficulty.toFixed(1)}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-purple-900 rounded-lg shadow-xl p-6 border border-purple-700">
+                      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                        💎 Differential Picks (Low Ownership)
+                      </h2>
+                      <p className="text-purple-200 mb-4">Players owned by less than 5% who could be great differentials</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        {recommendations.differentials.slice(0, 5).map((player) => (
+                          <div key={player.id} className="bg-purple-800 rounded-lg p-4 border-2 border-purple-600 hover:border-purple-400 transition-all">
+                            <div className="font-bold text-white">{player.web_name}</div>
+                            <div className="text-sm text-purple-200">{teams[player.team]?.short_name}</div>
+                            <div className="text-sm text-purple-200">{getPositionName(player.element_type)}</div>
+                            <div className="text-xs font-semibold text-purple-400 mt-1 mb-2">
+                              {player.fixtureString}
+                            </div>
+                            <div className="mt-2 space-y-1 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-purple-300">Price:</span>
+                                <span className="font-semibold text-white">{formatPrice(player.now_cost)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-purple-300">Form:</span>
+                                <span className="font-semibold text-white">{player.form}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-purple-300">Owned:</span>
+                                <span className="font-semibold text-purple-400">{player.selected_by_percent}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {!recommendations && !loading && (
+                  <div className="bg-purple-900 rounded-lg shadow-xl p-12 text-center border border-purple-700">
+                    <div className="text-6xl mb-4">⚽</div>
+                    <h3 className="text-xl font-semibold text-white mb-2">Ready to analyze FPL data</h3>
+                    <p className="text-purple-200 mb-4">Click "Auto Fetch" to try automatic data retrieval, or use "Manual Input" if that doesn't work</p>
+                    <div className="bg-purple-800 rounded-lg p-4 text-sm text-left max-w-2xl mx-auto border-2 border-purple-600">
+                      <p className="font-semibold mb-2 text-white">Manual Input Instructions:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-purple-200">
+                        <li>Click the "Manual Input" button above</li>
+                        <li>Visit the FPL API URL in a new tab</li>
+                        <li>Copy all the JSON data from that page</li>
+                        <li>Paste it into the text box and click "Analyze Data"</li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<FPLAnalyzer />, document.getElementById('root'));
+    </script>
+</body>
+</html>
