@@ -259,13 +259,13 @@
           };
 
           return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-4">
+            <div className="min-h-screen bg-gradient-to-br from-purple-700 via-pink-600 to-purple-900 p-4">
               <div className="max-w-7xl mx-auto">
                 <div className="bg-white rounded-lg shadow-2xl p-6 mb-6">
                   <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
                     <div>
-                      <h1 className="text-3xl font-bold text-purple-900 flex items-center gap-2">
-                        📊 FPL Gameweek Recommendations
+                      <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex items-center gap-2">
+                        ⚽ FPL Gameweek Recommendations
                       </h1>
                       <p className="text-gray-600 mt-1">Data-driven insights for your Fantasy Premier League team</p>
                     </div>
@@ -273,13 +273,13 @@
                       <button
                         onClick={fetchFPLData}
                         disabled={loading}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold"
                       >
                         {loading ? '⏳' : '🔄'} {loading ? 'Loading...' : 'Auto Fetch'}
                       </button>
                       <button
                         onClick={() => setShowManualInput(!showManualInput)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                        className="bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50 px-6 py-3 rounded-lg flex items-center gap-2 transition-all font-semibold"
                       >
                         📤 Manual Input
                       </button>
@@ -287,12 +287,12 @@
                   </div>
                   
                   {showManualInput && (
-                    <div className="bg-indigo-50 rounded-lg p-4 mb-4">
-                      <h3 className="font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 mb-4 border-2 border-purple-200">
+                      <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
                         📝 Manual Data Input
                       </h3>
                       <p className="text-sm text-gray-700 mb-3">
-                        1. Visit: <a href="https://fantasy.premierleague.com/api/bootstrap-static/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">https://fantasy.premierleague.com/api/bootstrap-static/</a>
+                        1. Visit: <a href="https://fantasy.premierleague.com/api/bootstrap-static/" target="_blank" rel="noopener noreferrer" className="text-purple-600 underline font-semibold">https://fantasy.premierleague.com/api/bootstrap-static/</a>
                         <br />
                         2. Copy all the JSON data from that page (Ctrl+A, Ctrl+C)
                         <br />
@@ -302,12 +302,12 @@
                         value={manualData}
                         onChange={(e) => setManualData(e.target.value)}
                         placeholder="Paste the complete JSON data here..."
-                        className="w-full h-32 p-3 border border-gray-300 rounded-lg font-mono text-sm mb-3"
+                        className="w-full h-32 p-3 border-2 border-purple-300 rounded-lg font-mono text-sm mb-3 focus:border-pink-500 focus:outline-none"
                       />
                       <button
                         onClick={handleManualDataSubmit}
                         disabled={!manualData.trim() || loading}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                       >
                         ✅ Analyze Data
                       </button>
@@ -315,7 +315,7 @@
                   )}
                   
                   {currentGameweek && (
-                    <div className="bg-purple-50 rounded-lg p-4 mb-4">
+                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-4 mb-4 border-l-4 border-purple-600">
                       <p className="text-purple-900 font-semibold">
                         📅 Current Gameweek: {currentGameweek} | Next Gameweek: {currentGameweek + 1}
                       </p>
@@ -336,13 +336,13 @@
                 {recommendations && (
                   <>
                     <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-                      <h2 className="text-2xl font-bold text-purple-900 mb-4 flex items-center gap-2">
+                      <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
                         🎯 Top Captain Picks (GW {recommendations.nextGameweek})
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         {recommendations.captainPicks.map((player, idx) => (
-                          <div key={player.id} className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-400">
-                            <div className="text-2xl font-bold text-yellow-700 mb-1">#{idx + 1}</div>
+                          <div key={player.id} className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 rounded-lg p-4 border-2 border-purple-400 hover:border-pink-500 transition-all">
+                            <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-1">#{idx + 1}</div>
                             <div className="font-bold text-gray-900">{player.web_name}</div>
                             <div className="text-sm text-gray-600">{teams[player.team]?.short_name}</div>
                             <div className="text-sm text-gray-600">{getPositionName(player.element_type)}</div>
@@ -373,7 +373,7 @@
                     </div>
 
                     <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-                      <h2 className="text-2xl font-bold text-purple-900 mb-4 flex items-center gap-2">
+                      <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
                         👥 Top Picks by Position
                       </h2>
                       
@@ -384,7 +384,7 @@
                           </h3>
                           <div className="overflow-x-auto">
                             <table className="w-full">
-                              <thead className="bg-purple-50">
+                              <thead className="bg-gradient-to-r from-purple-100 to-pink-100">
                                 <tr>
                                   <th className="px-4 py-2 text-left text-sm font-semibold text-purple-900">Player</th>
                                   <th className="px-4 py-2 text-left text-sm font-semibold text-purple-900">Team</th>
@@ -398,7 +398,7 @@
                               </thead>
                               <tbody>
                                 {recommendations.byPosition[position].slice(0, 5).map((player, idx) => (
-                                  <tr key={player.id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                  <tr key={player.id} className={idx % 2 === 0 ? 'bg-purple-50 bg-opacity-30' : 'bg-white'}>
                                     <td className="px-4 py-3 font-medium text-gray-900">{player.web_name}</td>
                                     <td className="px-4 py-3 text-gray-700">{teams[player.team]?.short_name}</td>
                                     <td className="px-4 py-3 text-sm text-purple-600 font-medium">{player.fixtureString}</td>
@@ -425,13 +425,13 @@
                     </div>
 
                     <div className="bg-white rounded-lg shadow-xl p-6">
-                      <h2 className="text-2xl font-bold text-purple-900 mb-4 flex items-center gap-2">
+                      <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
                         💎 Differential Picks (Low Ownership)
                       </h2>
                       <p className="text-gray-600 mb-4">Players owned by less than 5% who could be great differentials</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         {recommendations.differentials.slice(0, 5).map((player) => (
-                          <div key={player.id} className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border-2 border-indigo-300">
+                          <div key={player.id} className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 rounded-lg p-4 border-2 border-purple-300 hover:border-pink-500 transition-all">
                             <div className="font-bold text-gray-900">{player.web_name}</div>
                             <div className="text-sm text-gray-600">{teams[player.team]?.short_name}</div>
                             <div className="text-sm text-gray-600">{getPositionName(player.element_type)}</div>
@@ -449,7 +449,7 @@
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-gray-600">Owned:</span>
-                                <span className="font-semibold text-indigo-600">{player.selected_by_percent}%</span>
+                                <span className="font-semibold text-purple-600">{player.selected_by_percent}%</span>
                               </div>
                             </div>
                           </div>
@@ -462,10 +462,10 @@
                 {!recommendations && !loading && (
                   <div className="bg-white rounded-lg shadow-xl p-12 text-center">
                     <div className="text-6xl mb-4">⚽</div>
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">Ready to analyze FPL data</h3>
+                    <h3 className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">Ready to analyze FPL data</h3>
                     <p className="text-gray-600 mb-4">Click "Auto Fetch" to try automatic data retrieval, or use "Manual Input" if that doesn't work</p>
-                    <div className="bg-gray-50 rounded-lg p-4 text-sm text-left max-w-2xl mx-auto">
-                      <p className="font-semibold mb-2">Manual Input Instructions:</p>
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 text-sm text-left max-w-2xl mx-auto border-2 border-purple-200">
+                      <p className="font-semibold mb-2 text-purple-900">Manual Input Instructions:</p>
                       <ol className="list-decimal list-inside space-y-1 text-gray-700">
                         <li>Click the "Manual Input" button above</li>
                         <li>Visit the FPL API URL in a new tab</li>
