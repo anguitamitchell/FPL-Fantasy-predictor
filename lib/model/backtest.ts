@@ -11,6 +11,19 @@ export interface BacktestRow {
   spearmanForm: number;
   top50HitModel: number; // mean actual points of our top-50 picks
   top50HitForm: number;
+  maeBench?: number; // optional external benchmark (e.g. FPL's own xP)
+  spearmanBench?: number;
+  top50HitBench?: number;
+}
+
+export interface BacktestOptions {
+  overrides?: Partial<ModelInput>;
+  /** Squads/prices as of a GW (past seasons); defaults to the single bootstrap. */
+  bootstrapAt?: (gw: number) => Bootstrap;
+  benchmark?: Map<number, Map<number, number>>;
+  /** "all": anyone with minutes this season; "played": only players who featured in the target GW
+   * (removes the advantage of knowing injuries/suspensions, which our backtest can't see). */
+  evaluate?: "all" | "played";
 }
 
 function ranks(xs: number[]): number[] {
@@ -52,14 +65,16 @@ export function backtest(
   lives: Map<number, Live>,
   priors: Map<number, PlayerPrior>,
   targetGws: number[],
-  overrides: Partial<ModelInput> = {},
+  opts: BacktestOptions = {},
 ): BacktestRow[] {
-  const neutral: Bootstrap = {
-    ...bootstrap,
-    elements: bootstrap.elements.map((e) => ({ ...e, status: "a", chance_of_playing_next_round: null, news: "" })),
-  };
+  const overrides = opts.overrides ?? {};
+  const neutralise = (b: Bootstrap): Bootstrap => ({
+    ...b,
+    elements: b.elements.map((e) => ({ ...e, status: "a", chance_of_playing_next_round: null, news: "" })),
+  });
   const rows: BacktestRow[] = [];
   for (const gw of targetGws) {
+    const neutral = neutralise(opts.bootstrapAt ? opts.bootstrapAt(gw) : bootstrap);
     const past = new Map([...lives].filter(([g]) => g < gw));
     const actual = lives.get(gw);
     if (!actual || past.size === 0) continue;
@@ -70,15 +85,19 @@ export function backtest(
     const actualMin = new Map(actual.elements.map((e) => [e.id, e.stats.minutes]));
     const pred: number[] = [];
     const form: number[] = [];
+    const bench: number[] = [];
     const act: number[] = [];
+    const benchGw = opts.benchmark?.get(gw);
     for (const p of model.players.values()) {
       // Evaluate on players who had any minutes in the past or this GW (ignores the long tail of 0s).
       const pastMin = p.history.reduce((s, h) => s + h.minutes, 0);
       if (pastMin === 0 && (actualMin.get(p.element.id) ?? 0) === 0) continue;
+      if (opts.evaluate === "played" && (actualMin.get(p.element.id) ?? 0) === 0) continue;
       const recent = p.history.filter((h) => h.gw >= gw - 4);
       const f = recent.length ? recent.reduce((s, h) => s + h.points, 0) / recent.length : 0;
       pred.push(p.byGw[gw] ?? 0);
       form.push(f);
+      bench.push(benchGw?.get(p.element.id) ?? 0);
       act.push(actualPts.get(p.element.id) ?? 0);
     }
     const mae = (xs: number[]) => xs.reduce((s, v, i) => s + Math.abs(v - act[i]), 0) / xs.length;
@@ -95,6 +114,7 @@ export function backtest(
       spearmanForm: spearman(form, act),
       top50HitModel: topHit(pred),
       top50HitForm: topHit(form),
+      ...(benchGw ? { maeBench: mae(bench), spearmanBench: spearman(bench, act), top50HitBench: topHit(bench) } : {}),
     });
   }
   return rows;

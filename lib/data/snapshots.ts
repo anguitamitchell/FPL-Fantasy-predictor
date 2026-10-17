@@ -1,8 +1,16 @@
 import { kv } from "@/lib/store";
 import type { Bootstrap } from "@/lib/fpl/schemas";
 
-/** Compact daily snapshot: id -> [price, ownership%, net transfers this GW, form]. */
-export type Snapshot = { date: string; gw: number | null; players: Record<number, [number, number, number, number]> };
+/**
+ * Compact daily snapshot: id -> [price, ownership%, net transfers this GW, form, FPL ep_next].
+ * ep_next is stored pre-deadline so the model can later be benchmarked fairly against FPL's own projection.
+ */
+export type Snapshot = {
+  date: string;
+  gw: number | null;
+  nextGw?: number | null;
+  players: Record<number, [number, number, number, number, number | null]>;
+};
 
 export const today = (d = new Date()) => d.toISOString().slice(0, 10);
 
@@ -10,8 +18,9 @@ export async function writeSnapshot(b: Bootstrap, date = today()): Promise<Snaps
   const snap: Snapshot = {
     date,
     gw: b.events.find((e) => e.is_current)?.id ?? null,
+    nextGw: b.events.find((e) => e.is_next)?.id ?? null,
     players: Object.fromEntries(
-      b.elements.map((e) => [e.id, [e.now_cost, e.selected_by_percent, e.transfers_in_event - e.transfers_out_event, e.form]]),
+      b.elements.map((e) => [e.id, [e.now_cost, e.selected_by_percent, e.transfers_in_event - e.transfers_out_event, e.form, e.ep_next]]),
     ),
   };
   await kv().set(`snap:${date}`, snap);

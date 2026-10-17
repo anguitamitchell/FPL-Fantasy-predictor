@@ -81,10 +81,12 @@ export function estimateRates(
     acc.yellow += w * (h.yellow ?? 0);
     w90 += (w * h.minutes) / 90;
   }
-  const lsMin = prior && prior.minutes > 0 ? Math.min(prior.minutes, lsCap) * lsW : 0;
+  const lsMinAll = prior && prior.minutes > 0 ? Math.min(prior.minutes, lsCap) * lsW : 0;
   const rate = (k: RateKey) => {
     const posRate = baseline[k] * (k === "xg" || k === "xa" || k === "goals" || k === "assists" ? priceMult : 1);
-    const lsRate = prior && prior.minutes > 0 ? (prior[k] / prior.minutes) * 90 : 0;
+    const lsVal = prior ? prior[k] : null;
+    const lsMin = lsVal === null ? 0 : lsMinAll;
+    const lsRate = lsMin > 0 && prior ? ((lsVal ?? 0) / prior.minutes) * 90 : 0;
     return (acc[k] + (lsMin / 90) * lsRate + (posMin / 90) * posRate) / (w90 + lsMin / 90 + posMin / 90);
   };
 

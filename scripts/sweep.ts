@@ -11,9 +11,9 @@ async function main() {
     for (const posMin of [180, 360, 720])
       for (const lsW of [0.25, 0.5, 1])
         for (const mHL of [2, 3, 5]) {
-          const rows = backtest(s.bootstrap, s.fixtures, s.lives, priors, gws, {
+          const rows = backtest(s.bootstrap, s.fixtures, s.lives, priors, gws, { overrides: {
             rateOptions: { attackHalfLife: aHL, positionPriorMinutes: posMin, lastSeasonWeight: lsW, minutesHalfLife: mHL },
-          });
+          } });
           const avg = (f: (r: (typeof rows)[0]) => number) => rows.reduce((a, r) => a + f(r), 0) / rows.length;
           out.push(`${avg((r) => r.maeModel).toFixed(4)} sp ${avg((r) => r.spearmanModel).toFixed(4)} top ${avg((r) => r.top50HitModel).toFixed(2)}  aHL=${aHL} posMin=${posMin} lsW=${lsW} mHL=${mHL}`);
         }

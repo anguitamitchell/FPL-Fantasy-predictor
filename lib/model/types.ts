@@ -41,7 +41,7 @@ export interface PlayerPrior {
   assists: number;
   bonus: number;
   saves: number;
-  dc: number;
+  dc: number | null; // null when the stat wasn't tracked that season
   yellow: number;
 }
 
