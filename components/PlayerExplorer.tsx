@@ -110,7 +110,10 @@ export function PlayerExplorer({ players, gws, teams }: { players: PlayerRow[]; 
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium">{p.name}</span>
                       <StatusDot status={p.status} chance={p.chance} news={p.news} />
-                      {p.ext?.label && <span title={p.ext.label} className="rounded bg-accent-soft px-1 text-[10px] text-accent">EU</span>}
+                      {p.ext?.label && <span title={`Other competitions: ${p.ext.label}`} className="rounded bg-accent-soft px-1 text-[10px] text-accent">+comps</span>}
+                      {p.ext && p.ext.minutesFactor < 0.99 && (
+                        <span title={`Midweek fixture congestion: start chance ×${p.ext.minutesFactor.toFixed(2)} next GW`} className="rounded bg-warn/15 px-1 text-[10px] text-warn">rotation</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-muted">{p.teamShort} <PosBadge pos={p.pos} /></div>
                   </td>
