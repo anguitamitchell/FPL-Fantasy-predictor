@@ -1,111 +1,72 @@
-# FPL Gameweek Recommendations Tool
+# FPL Predictor
 
-A data-driven Fantasy Premier League analysis tool that provides weekly recommendations for captain picks, transfers, and differential players based on official FPL API data.
+Expected points, differentials and transfer planning for Fantasy Premier League, built on the official FPL API.
 
+- **Dashboard**: captain picks with haul chance and ceiling, the best players by position over the next 5 GWs, best value, and likely price rises and falls tonight.
+- **Players**: every player's projected points per gameweek, filterable and sortable. Click a row to see where the points come from (minutes, goals, assists, clean sheets, defensive contributions, bonus…).
+- **Differentials**: low-owned players ranked by *edge* (xPts × share of managers who don't own them). Each one is tagged with why it looks undervalued: underlying stats ahead of returns, model rank ≫ ownership rank, ownership rising, a kind run of fixtures, or minutes going up. Also lists popular players projected to underperform.
+- **Fixtures**: a fixture ticker coloured by expected goal difference from our own team ratings, not FPL's 1–5 difficulty.
+- **My Team**: import your squad by FPL ID (real selling prices, free transfers, chips) or build one by hand, then run the optimiser. It solves a mixed-integer program (HiGHS) for hold / 1 / 2 / 3 transfers / solver's choice / Wildcard / Free Hit. Plans respect budget, the 2-5-5-3 squad, max 3 per club and valid formations, and come with a starting XI, captain and bench order.
 
-## Features
+Form from **other competitions** (UCL, UEL, UECL, FA Cup, EFL Cup) is included. Midweek fixtures lower a player's chance of starting, and non-PL attacking output nudges attacking projections (capped at ±10%).
 
-- **Top Captain Picks**: Get the 5 best captain options for the upcoming gameweek
-- **Position-Specific Recommendations**: View top performers by position (GK, DEF, MID, FWD)
-- **Differential Picks**: Discover low-owned players (<5%) with high potential
-- **Smart Algorithm**: Considers form, fixtures, value, minutes played, and ICT index
-- **Automatic & Manual Data Loading**: Auto-fetch from FPL API or manual JSON input
+## How the projections work
 
-## Live Demo
+Each player is projected **per fixture**, so double and blank gameweeks fall out naturally:
 
-🔗 [View Live Demo](https://anguitamitchell.github.io/FPL-Fantasy-predictor/)
+| Part | How it's estimated |
+| --- | --- |
+| Team strength | Attack/defence ratings fitted to recent xG (70%) and goals (30%), with home advantage, shrunk toward FPL's pre-season strength |
+| Minutes | Recency-weighted start rate, minutes per start/sub, P(60+), plus FPL status/news (e.g. "Expected back 25 Oct") and fixture congestion |
+| Goals / assists | Recency-weighted xG/xA per 90, blended with last season and a price-aware position prior, scaled by opponent and venue |
+| Clean sheets / goals conceded | Poisson on the opponent's expected goals |
+| Defensive contributions | Negative binomial on CBIT/CBIRT per 90 (dispersion calibrated on real data) vs the 10/12 thresholds |
+| Saves, bonus, cards | Per-90 rates scaled by fixture |
 
+Scoring values are read from FPL's own `game_config`, so rule changes are picked up automatically.
 
-## How It Works
+**Backtest** (walk-forward, no future data): over 2025/26 GW3–38 the model's mean absolute error is **1.60** vs **1.74** for a 4-GW form baseline, and its top-50 picks average **4.27** points per GW vs **3.55**. On this season's GW2–6 it beats form on MAE and rank correlation in every week. A ridge calibration and a small gradient-boosted model were also trained on 2025/26. Neither improved this season's out-of-sample picks, so the transparent model stays. See `scripts/backtest-past.ts`, `scripts/fit-calibration.ts` and `scripts/fit-gbm.ts`.
 
-The tool analyzes player data using a scoring algorithm that weighs:
-Average Points Per Game: 5x weight (most important!)
-Total Season Points: 0.5x weight (rewards consistency)
-Recent Form: 4x weight (hot players)
-Good Fixtures: 2x weight
-Bonus Point Magnets: 2x weight per bonus
-Template players (>20% owned): Bonus points
-
-## Usage
-
-### Option 1: Use Locally
-1. Download `index.html`
-2. Open it in any modern web browser
-3. Click "Auto Fetch" or use "Manual Input"
-
-### Option 2: GitHub Pages
-Visit the live demo link above (no installation needed!)
-
-### Manual Data Input Instructions
-If auto-fetch doesn't work:
-1. Click the "Manual Input" button
-2. Visit: https://fantasy.premierleague.com/api/bootstrap-static/
-3. Copy all the JSON data (Ctrl+A, Ctrl+C)
-4. Paste into the text box
-5. Click "Analyze Data"
-
-## Installation for Development
+## Running locally
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/fpl-recommendations-tool.git
-
-# Navigate to directory
-cd fpl-recommendations-tool
-
-# Open in browser
-open index.html
+npm install
+npm run dev
 ```
 
-## Deployment to GitHub Pages
+Open http://localhost:3000. Local data is cached under `.data/` (git-ignored). To fill it:
 
-1. Create a new repository on GitHub
-2. Upload `index.html` to the repository
-3. Go to **Settings** → **Pages**
-4. Under "Source", select your main branch
-5. Click Save
-6. Your tool will be live at `https://yourusername.github.io/fpl-recommendations-tool/`
+```bash
+curl http://localhost:3000/api/cron/ingest
+```
 
-## Technologies Used
+This takes a price/ownership snapshot, stores settled gameweeks, loads last-season priors and pulls other-competition data.
 
-- **React 18**: UI framework
-- **Tailwind CSS**: Styling
-- **Official FPL API**: Data source
-- Pure JavaScript (no build process required)
+```bash
+npm test             # vitest: schemas, model maths, optimiser constraints, ESPN parsing
+npx tsx scripts/report.ts             # top projections vs FPL's ep_next
+npx tsx scripts/backtest.ts           # this season, walk-forward
+npx tsx scripts/backtest-past.ts      # 2025/26 (needs vaastav CSVs in .data/, see the script)
+```
 
-## Data Source
+## Deploying (Vercel + Supabase)
 
-This tool uses the official Fantasy Premier League API:
-- Main data: `https://fantasy.premierleague.com/api/bootstrap-static/`
-- Fixtures: `https://fantasy.premierleague.com/api/fixtures/`
+1. Create a Supabase project and run `supabase/migrations/0001_kv.sql`.
+2. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET` in Vercel (`vercel env add …`).
+3. `vercel deploy --prod`. `vercel.json` schedules `/api/cron/ingest` daily at 06:00 UTC.
 
-Data updates automatically after each gameweek.
+Without Supabase, the app still runs, but anything stored (snapshots, priors, cup data) only lives in the function's `/tmp`.
 
-## Contributing
+## Data sources
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- Official FPL API (`bootstrap-static`, `fixtures`, `event/{gw}/live`, `element-summary`, public `entry/{id}/…` endpoints). Proxied and cached server side, so there are no CORS proxies.
+- ESPN's public soccer API for cup and European schedules and box scores (unofficial; the app works without it).
+- [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League) for past-season backtests only.
 
-### Ideas for Improvement
-- Add team builder functionality
-- Include transfer suggestions based on your current squad
-- Add price change predictions
-- Historical performance charts
-- Chip usage recommendations
-
-## License
-
-GNU GENERAL PUBLIC LICENSE
+The original single-file version lives in `legacy/index.html`.
 
 ## Disclaimer
 
-This tool is not affiliated with or endorsed by the Premier League or Fantasy Premier League. It's a fan-made project for educational and entertainment purposes.
+Not affiliated with or endorsed by the Premier League or Fantasy Premier League. Projections are estimates for entertainment, not advice.
 
-## Support
-
-If you find this tool helpful, please ⭐ star the repository!
-
-For issues or feature requests, please open an issue on GitHub.
-
----
-
-**Happy FPL managing! 🏆⚽**
+GNU GPL v3. See `LICENSE`.

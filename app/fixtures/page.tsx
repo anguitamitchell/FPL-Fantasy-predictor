@@ -59,4 +59,7 @@ async function Ticker() {
 }
 
 const sum = (xs: number[]) => xs.reduce((s, v) => s + v, 0);
-const fmtSigned = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
+const fmtSigned = (v: number) => {
+  const r = Math.round(v * 10) / 10;
+  return r === 0 ? "0.0" : `${r > 0 ? "+" : ""}${r.toFixed(1)}`;
+};

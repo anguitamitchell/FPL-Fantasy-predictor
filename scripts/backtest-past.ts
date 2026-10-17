@@ -2,7 +2,13 @@ import { getBootstrap } from "@/lib/fpl/client";
 import { loadPastSeason } from "@/lib/backtest/vaastav";
 import { backtest, type BacktestRow } from "@/lib/model/backtest";
 
-/** Walk-forward backtest over a full past season (vaastav data under .data/). */
+/**
+ * Walk-forward backtest over a full past season. Needs the public vaastav CSVs:
+ *   .data/vaastav-2025-26/{merged_gw,fixtures,teams,players_raw}.csv  (gws/merged_gw.csv upstream)
+ *   .data/vaastav-2024-25/players_raw.csv                             (priors)
+ * from https://github.com/vaastav/Fantasy-Premier-League/tree/master/data
+ * Usage: npx tsx scripts/backtest-past.ts [all|played]
+ */
 async function main() {
   const scoring = (await getBootstrap()).game_config.scoring;
   const past = loadPastSeason(".data/vaastav-2025-26", ".data/vaastav-2024-25", scoring);

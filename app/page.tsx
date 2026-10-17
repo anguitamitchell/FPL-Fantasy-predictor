@@ -43,7 +43,7 @@ async function Dashboard() {
       </div>
 
       <Card title="Captain picks" subtitle={`Highest expected points for GW${d.nextGw}. Haul = chance of 10+ points.`}>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
           {captains.map((p, i) => (
             <div key={p.id} className="rounded-lg border border-border bg-surface-2/50 p-3">
               <div className="flex items-center justify-between text-xs text-muted">

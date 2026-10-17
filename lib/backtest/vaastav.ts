@@ -40,7 +40,6 @@ const n = (v: string | undefined) => {
   const x = v === undefined || v === "" ? 0 : Number(v);
   return Number.isFinite(x) ? x : 0;
 };
-const POS: Record<string, number> = { GK: 1, GKP: 1, DEF: 2, MID: 3, FWD: 4, AM: 3 };
 
 export interface PastSeason {
   bootstrapAt: (gw: number) => Bootstrap; // squads/prices as of that GW

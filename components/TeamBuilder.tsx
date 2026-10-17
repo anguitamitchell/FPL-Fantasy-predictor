@@ -376,17 +376,17 @@ function Pitch(props: {
   return (
     <div className="overflow-hidden rounded-xl border border-border">
       <div
-        className="space-y-3 px-2 py-4 sm:px-4"
+        className="space-y-3 px-1 py-4 sm:px-4"
         style={{ background: "linear-gradient(180deg, color-mix(in srgb, var(--good) 22%, var(--surface)) 0%, color-mix(in srgb, var(--good) 12%, var(--surface)) 100%)" }}
       >
         {POSITIONS.map((pos) => (
-          <div key={pos} className="flex flex-wrap justify-center gap-2">
+          <div key={pos} className="flex flex-wrap justify-center gap-1 sm:gap-2">
             {row(pos).map(card)}
             {Array.from({ length: Math.max(0, empties(pos)) }, (_, i) => (
               <button
                 key={`e${i}`}
                 onClick={() => props.onReplace(null, pos)}
-                className="flex h-[118px] w-[92px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-surface/60 text-xs text-muted hover:bg-surface"
+                className="flex h-[104px] w-[60px] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-surface/60 text-[11px] text-muted hover:bg-surface sm:h-[118px] sm:w-[92px] sm:text-xs"
               >
                 <span className="text-lg">+</span>Add {pos}
               </button>
@@ -395,7 +395,7 @@ function Pitch(props: {
         ))}
       </div>
       {bench.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-2 border-t border-border bg-surface-2 px-2 py-3">
+        <div className="flex flex-wrap items-center justify-center gap-1 border-t border-border bg-surface-2 px-1 py-3 sm:gap-2 sm:px-2">
           <span className="w-full text-center text-[10px] uppercase tracking-wide text-muted sm:w-auto">Bench</span>
           {bench.map(card)}
         </div>
@@ -425,18 +425,21 @@ function PlayerCard(props: {
     <div className="relative">
       <button
         onClick={() => props.editable && setMenu(!menu)}
-        className={`flex h-[118px] w-[92px] flex-col items-center rounded-lg border bg-surface px-1 pt-1.5 text-center shadow-sm ${
+        className={`flex h-[104px] w-[60px] flex-col items-center rounded-lg border bg-surface px-0.5 pt-1 text-center shadow-sm sm:h-[118px] sm:w-[92px] sm:px-1 sm:pt-1.5 ${
           props.isNew ? "border-accent ring-2 ring-accent/40" : "border-border"
         }`}
       >
         <span className="text-[10px] font-semibold text-muted">{p.teamShort}</span>
-        <span className="mt-0.5 flex w-full items-center justify-center text-xs font-semibold">
+        <span className="mt-0.5 flex w-full items-center justify-center text-[11px] font-semibold sm:text-xs">
           <span className="truncate">{p.name}</span>
           <StatusDot status={p.status} chance={p.chance} news={p.news} />
         </span>
         <span className="mt-1 flex gap-0.5">{next.length ? next.map((f, i) => <FixtureChip key={i} f={f} compact />) : <span className="text-[10px] text-muted">Blank</span>}</span>
         <span className="mt-1 tabular text-sm font-semibold">{p.byGw[0]?.toFixed(1)}</span>
-        <span className="tabular text-[10px] text-muted">{p.xpts.toFixed(1)} · {fmt.price(p.price)}</span>
+        <span className="tabular text-[10px] text-muted">
+          {p.xpts.toFixed(1)}
+          <span className="hidden sm:inline"> · {fmt.price(p.price)}</span>
+        </span>
       </button>
       {(props.captain || props.vice) && (
         <span className={`absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${props.captain ? "bg-accent text-accent-text" : "bg-surface-2 text-text"}`}>
