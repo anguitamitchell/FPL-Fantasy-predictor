@@ -32,8 +32,7 @@ export interface PlayerRates {
   seasonMinutes: number;
 }
 
-const RATE_KEYS = ["xg", "xa", "goals", "assists", "bonus", "saves", "dc", "yellow"] as const;
-type RateKey = (typeof RATE_KEYS)[number];
+type RateKey = "xg" | "xa" | "goals" | "assists" | "bonus" | "saves" | "dc" | "yellow";
 
 export const DC_THRESHOLD: Record<Pos, number> = { GKP: Infinity, DEF: 10, MID: 12, FWD: 12 };
 

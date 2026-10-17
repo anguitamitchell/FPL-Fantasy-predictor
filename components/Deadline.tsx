@@ -1,13 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+// A 30-second clock; null during SSR/hydration so server and client markup match.
+const subscribe = (cb: () => void) => {
+  const t = setInterval(cb, 30_000);
+  return () => clearInterval(t);
+};
+const tick = () => Math.floor(Date.now() / 30_000) * 30_000;
 
 export function Deadline({ iso }: { iso: string }) {
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(t);
-  }, []);
+  const now = useSyncExternalStore(subscribe, tick, () => null);
   const d = new Date(iso);
   const label = d.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   if (now === null) return <span>{label}</span>;

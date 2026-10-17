@@ -51,6 +51,8 @@ export interface PlayerRow {
   };
   netTransfersGw: number;
   priceTrend: { percent: number; tonight: number; likelihood: number } | null;
+  /** Hasn't played and isn't expected to: hidden from most lists but kept for squads. */
+  inactive: boolean;
   ext?: { comps: number; mins14d: number; minutesFactor: number; form90: number | null; label: string | null };
 }
 
@@ -104,9 +106,7 @@ export function toAppData(m: ModelOutput & SeasonData, extInfo?: Map<number, Pla
   const players: PlayerRow[] = [];
   for (const p of m.players.values()) {
     const e = p.element;
-    // Skip the long tail who won't play and haven't played.
     const firstFx = p.fixtures[0];
-    if (p.rates.seasonMinutes === 0 && (firstFx?.pPlay ?? 0) < 0.15 && p.total < 0.5) continue;
     const comps: Record<string, number> = {};
     for (const f of p.fixtures) for (const [k, v] of Object.entries(f.components)) comps[k] = (comps[k] ?? 0) + v;
     for (const k of Object.keys(comps)) comps[k] = round(comps[k]);
@@ -144,6 +144,7 @@ export function toAppData(m: ModelOutput & SeasonData, extInfo?: Map<number, Pla
         e.price_change_percent != null
           ? { percent: e.price_change_percent, tonight: proj?.projected_percent ?? e.price_change_percent, likelihood: proj?.likelihood ?? 0 }
           : null,
+      inactive: p.rates.seasonMinutes === 0 && (firstFx?.pPlay ?? 0) < 0.15 && p.total < 0.5,
       ext: extInfo?.get(e.id),
     });
   }
