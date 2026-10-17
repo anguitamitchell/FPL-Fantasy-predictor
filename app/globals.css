@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/* Design tokens. Light is the base; dark overrides below. */
+:root {
+  --bg: #f6f5f8;
+  --surface: #ffffff;
+  --surface-2: #f0eef4;
+  --border: #e2dfe8;
+  --text: #1c1424;
+  --muted: #6b6475;
+  --accent: #6d28d9; /* violet */
+  --accent-soft: #ede9fe;
+  --accent-text: #ffffff;
+  --good: #047857;
+  --bad: #b91c1c;
+  --warn: #b45309;
+  /* Fixture ease scale: 1 = hardest .. 5 = easiest */
+  --fx-1: #b91c1c;
+  --fx-2: #f87171;
+  --fx-3: #d6d3dc;
+  --fx-4: #6ee7b7;
+  --fx-5: #059669;
+  --fx-text-dark: #1c1424;
+  --fx-text-light: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0b14;
+    --surface: #18121f;
+    --surface-2: #221a2b;
+    --border: #2f2639;
+    --text: #f1edf6;
+    --muted: #a49cb0;
+    --accent: #a78bfa;
+    --accent-soft: #2e1f4a;
+    --accent-text: #120a1c;
+    --good: #34d399;
+    --bad: #f87171;
+    --warn: #fbbf24;
+    --fx-1: #b91c1c;
+    --fx-2: #7f2b2b;
+    --fx-3: #3a3145;
+    --fx-4: #1f6b52;
+    --fx-5: #10b981;
+    --fx-text-dark: #f1edf6;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f0b14;
+  --surface: #18121f;
+  --surface-2: #221a2b;
+  --border: #2f2639;
+  --text: #f1edf6;
+  --muted: #a49cb0;
+  --accent: #a78bfa;
+  --accent-soft: #2e1f4a;
+  --accent-text: #120a1c;
+  --good: #34d399;
+  --bad: #f87171;
+  --warn: #fbbf24;
+  --fx-1: #b91c1c;
+  --fx-2: #7f2b2b;
+  --fx-3: #3a3145;
+  --fx-4: #1f6b52;
+  --fx-5: #10b981;
+  --fx-text-dark: #f1edf6;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
