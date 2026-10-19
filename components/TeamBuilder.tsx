@@ -2,7 +2,9 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { FixtureCell } from "@/lib/data/view";
 import type { Scenario } from "@/lib/optimizer/scenarios";
-import type { ImportedTeam } from "@/lib/team/import";
+import { sellingPrice, type ImportedTeam } from "@/lib/team/import";
+import type { SavedTeamData } from "@/lib/team/saved";
+import { CloudSave } from "./CloudSave";
 import { FixtureChip, StatusDot, fmt } from "./ui";
 
 export interface SlimPlayer {
@@ -22,12 +24,12 @@ export interface SlimPlayer {
   inactive: boolean;
 }
 
-type Slot = { id: number; sell: number }; // sell in tenths
+type Slot = { id: number; sell: number; purchase?: number }; // prices in tenths
 const POSITIONS = ["GKP", "DEF", "MID", "FWD"] as const;
 const LIMITS = { GKP: 2, DEF: 5, MID: 5, FWD: 3 };
 const STORAGE_KEY = "fpl-predictor:team";
 
-type Stored = { entryId?: string; squad?: Slot[]; bank?: number; ft?: number };
+type Stored = { entryId?: string; squad?: Slot[]; bank?: number; ft?: number; locked?: number[]; banned?: number[]; chips?: string[] };
 function readStorage(): string | null {
   try {
     return localStorage.getItem(STORAGE_KEY);
@@ -61,10 +63,10 @@ function Builder({ players, gws, initial }: { players: SlimPlayer[]; gws: number
   const [squad, setSquad] = useState<Slot[]>(restorable ? initial!.squad! : []);
   const [bank, setBank] = useState(restorable ? (initial!.bank ?? 0) : 0); // tenths
   const [ft, setFt] = useState(restorable ? (initial!.ft ?? 1) : 1);
-  const [chips, setChips] = useState<string[]>([]);
+  const [chips, setChips] = useState<string[]>(restorable ? (initial!.chips ?? []) : []);
   const [useChips, setUseChips] = useState<string[]>([]);
-  const [locked, setLocked] = useState<number[]>([]);
-  const [banned, setBanned] = useState<number[]>([]);
+  const [locked, setLocked] = useState<number[]>(restorable ? (initial!.locked ?? []) : []);
+  const [banned, setBanned] = useState<number[]>(restorable ? (initial!.banned ?? []) : []);
   const [maxHits, setMaxHits] = useState(1);
   const [loading, setLoading] = useState<"import" | "opt" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,8 +75,8 @@ function Builder({ players, gws, initial }: { players: SlimPlayer[]; gws: number
   const [replacing, setReplacing] = useState<{ index: number | null; pos: SlimPlayer["pos"] } | null>(null);
   const [started, setStarted] = useState(restorable);
   useEffect(() => {
-    if (squad.length) writeStorage({ entryId, squad, bank, ft });
-  }, [entryId, squad, bank, ft]);
+    if (squad.length) writeStorage({ entryId, squad, bank, ft, locked, banned, chips });
+  }, [entryId, squad, bank, ft, locked, banned, chips]);
 
   async function importById() {
     const id = entryId.trim();
@@ -88,7 +90,7 @@ function Builder({ players, gws, initial }: { players: SlimPlayer[]; gws: number
       if (!res.ok) throw new Error(data.error ?? "Import failed");
       const t = data as ImportedTeam;
       setTeam(t);
-      setSquad(t.squad.map((s) => ({ id: s.id, sell: s.sell })));
+      setSquad(t.squad.map((s) => ({ id: s.id, sell: s.sell, purchase: s.purchase })));
       setBank(t.bank);
       setFt(t.freeTransfers);
       setChips(t.chipsAvailable);
@@ -100,6 +102,33 @@ function Builder({ players, gws, initial }: { players: SlimPlayer[]; gws: number
     } finally {
       setLoading(null);
     }
+  }
+
+  /** Snapshot of the current team for a cloud save. */
+  function saveData(): SavedTeamData {
+    return { squad, bank, freeTransfers: ft, locked, banned, chips, basedOnGw: team?.basedOnGw ?? null, teamName: team?.name };
+  }
+
+  /** Restores a cloud save, re-pricing players whose purchase price is known. */
+  function loadSaved(d: SavedTeamData) {
+    const known = d.squad.filter((x) => byId.has(x.id));
+    setSquad(
+      known.map((x) => {
+        const now = Math.round(byId.get(x.id)!.price * 10);
+        return { ...x, sell: x.purchase ? sellingPrice(x.purchase, now) : x.sell };
+      }),
+    );
+    setBank(d.bank);
+    setFt(d.freeTransfers);
+    setLocked(d.locked);
+    setBanned(d.banned);
+    setChips(d.chips);
+    setUseChips([]);
+    setTeam(null);
+    setPlan(null);
+    setSelected(null);
+    setError(known.length < d.squad.length ? "Some saved players are no longer in the game and were left out." : null);
+    setStarted(true);
   }
 
   function startEmpty() {
@@ -139,8 +168,13 @@ function Builder({ players, gws, initial }: { players: SlimPlayer[]; gws: number
   const incoming = new Set(scenario?.result.transfersIn ?? []);
 
   function applyScenario(s: Scenario) {
-    const sellOf = new Map(squad.map((x) => [x.id, x.sell]));
-    setSquad(s.result.squad.map((id) => ({ id, sell: sellOf.get(id) ?? Math.round(byId.get(id)!.price * 10) })));
+    const owned = new Map(squad.map((x) => [x.id, x]));
+    setSquad(
+      s.result.squad.map((id) => {
+        const price = Math.round(byId.get(id)!.price * 10);
+        return owned.get(id) ?? { id, sell: price, purchase: price };
+      }),
+    );
     setBank(s.result.bankAfter);
     const used = s.result.transfersIn.length;
     if (s.key !== "wildcard" && s.key !== "freehit" && s.key !== "complete") setFt(Math.max(0, ft - used));
@@ -154,8 +188,8 @@ function Builder({ players, gws, initial }: { players: SlimPlayer[]; gws: number
     let credit = 0;
     if (index !== null) {
       credit = next[index].sell;
-      next[index] = { id: newId, sell: Math.round(p.price * 10) };
-    } else next.push({ id: newId, sell: Math.round(p.price * 10) });
+      next[index] = { id: newId, sell: Math.round(p.price * 10), purchase: Math.round(p.price * 10) };
+    } else next.push({ id: newId, sell: Math.round(p.price * 10), purchase: Math.round(p.price * 10) });
     setSquad(next);
     setBank(bank + credit - Math.round(p.price * 10));
     setPlan(null);
@@ -198,6 +232,8 @@ function Builder({ players, gws, initial }: { players: SlimPlayer[]; gws: number
           Your ID is the number in your Points page URL: fantasy.premierleague.com/entry/<b>1234567</b>/event/6
         </p>
       </div>
+
+      <CloudSave entryId={entryId} canSave={started && squad.length > 0} getData={saveData} onLoad={loadSaved} />
 
       {error && <div className="rounded-lg border border-bad/40 bg-bad/10 px-4 py-3 text-sm text-bad">{error}</div>}
 
